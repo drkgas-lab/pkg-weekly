@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#1d3557">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="favicon-64.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="포장재 주간">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>포장재 원자재 주간 모니터링</title>
 <style>
 :root{--bg:#f6f7f9;--panel:#ffffff;--fg:#1c2430;--muted:#5d6878;--line:#dfe3e9;--brand:#1d3557;--brand-fg:#ffffff;--up:#c0392b;--down:#2563a8;--warn:#b7791f;--ok:#2e7d4f;--grid:#e8ebef;--chip-bg:#f1f4f8;color-scheme:light}
@@ -22,6 +29,7 @@ body{background:var(--bg);color:var(--fg);font-family:"Pretendard","Apple SD Got
 .lock button,.btn{font:inherit;font-weight:600;padding:10px 14px;border-radius:8px;border:1px solid var(--brand);background:var(--brand);color:var(--brand-fg);cursor:pointer}
 .lock .err{color:var(--up);font-size:13px;min-height:1.2em}
 :focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+body{padding-top:env(safe-area-inset-top,0px)}
 .head{background:var(--brand);color:var(--brand-fg);border-radius:10px;padding:18px 20px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between}
 .head h1{margin:0;font-size:clamp(20px,4.5vw,28px);line-height:1.2;letter-spacing:-.01em}
 .head .sub{opacity:.85;font-size:14px;margin-top:4px;font-variant-numeric:tabular-nums}
@@ -80,6 +88,7 @@ a{color:inherit}
     <h1>포장재 원자재 주간 모니터링</h1>
     <p>팀 공용 비밀번호를 입력하세요.</p>
     <input id="pw" type="password" aria-label="비밀번호" autocomplete="current-password" required>
+    <label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)"><input id="remember" type="checkbox" checked style="width:auto">이 기기에서 비밀번호 기억</label>
     <button type="submit">열기</button>
     <div class="err" id="err" role="alert"></div>
   </form>
@@ -91,8 +100,10 @@ a{color:inherit}
       <div class="tools">
         <select id="week" aria-label="리포트 주차"></select>
         <button class="btn" id="pdfbtn" type="button">PDF 받기</button>
+        <button class="btn" id="installbtn" type="button" hidden>앱 설치</button>
+        <button class="btn" id="logout" type="button" title="이 기기에 저장된 비밀번호를 지우고 잠급니다">잠금</button>
       </div>
-      <div class="msg" id="msg"></div>
+      <div class="msg" id="msg"></div><div class="msg" id="iosHint" hidden>아이폰: Safari 하단 공유 버튼 → '홈 화면에 추가'를 누르면 앱으로 설치됩니다.</div>
     </div>
   </header>
   <section id="s1"><h2><span class="n">1</span>상황 요약</h2>
@@ -111,7 +122,7 @@ a{color:inherit}
 </div>
 <script>
 (function(){
-const META={"salt": "pTAE1zz2/gYqpXJxjeAJZA==", "iter": 250000, "v": 1};
+const META={"salt": "gLAh0w2QyGnfcJMG0vkR9w==", "iter": 250000, "v": 1};
 const $=s=>document.querySelector(s);
 const GROUPS=["원유·환율","기초유분","합성수지","점착제·지류"];
 const TONE={"상승":"bad","상승 압력":"bad","활성":"bad","높음":"bad","▲":"bad","혼조":"warn","주의":"warn","보통":"warn","◆":"warn","하락":"ok","완화":"ok","낮음":"ok","▼":"ok","보합":"mute","안정":"mute","—":"mute"};
@@ -180,9 +191,16 @@ function start(){
   $("#pdfbtn").addEventListener("click",getPdf);
   $("#lock").hidden=true;$("#app").hidden=false;render();
 }
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{});});}
+let deferred=null;const standalone=window.matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;if(!standalone)$("#installbtn").hidden=false;});
+$("#installbtn").addEventListener("click",async()=>{if(!deferred)return;deferred.prompt();try{await deferred.userChoice;}catch(_){}deferred=null;$("#installbtn").hidden=true;});
+window.addEventListener("appinstalled",()=>{$("#installbtn").hidden=true;});
+if(!standalone&&/iphone|ipad|ipod/i.test(navigator.userAgent)){$("#iosHint").hidden=false;}
 $("#lockform").addEventListener("submit",async e=>{e.preventDefault();const pw=$("#pw").value;$("#err").textContent="확인 중…";
-  try{await unlock(pw);try{sessionStorage.setItem("pkgw",pw);}catch(_){}$("#err").textContent="";start();}catch(_){KEY=null;$("#err").textContent="비밀번호가 맞지 않습니다.";}});
-(async()=>{let pw=null;try{pw=sessionStorage.getItem("pkgw");}catch(_){}if(pw){try{await unlock(pw);start();}catch(_){}}})();
+  try{await unlock(pw);try{sessionStorage.setItem("pkgw",pw);if($("#remember").checked)localStorage.setItem("pkgw",pw);else localStorage.removeItem("pkgw");}catch(_){}$("#err").textContent="";start();}catch(_){KEY=null;$("#err").textContent="비밀번호가 맞지 않습니다.";}});
+(async()=>{let pw=null;try{pw=localStorage.getItem("pkgw")||sessionStorage.getItem("pkgw");}catch(_){}if(pw){try{await unlock(pw);start();}catch(_){try{localStorage.removeItem("pkgw");}catch(__){}}}})();
+$("#logout").addEventListener("click",()=>{try{localStorage.removeItem("pkgw");sessionStorage.removeItem("pkgw");}catch(_){}location.reload();});
 })();
 </script>
 </body>
