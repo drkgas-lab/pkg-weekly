@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#1d3557">
+<title>포장재 원자재 주간 모니터링</title>
+<style>
+:root{--bg:#f6f7f9;--panel:#ffffff;--fg:#1c2430;--muted:#5d6878;--line:#dfe3e9;--brand:#1d3557;--brand-fg:#ffffff;--up:#c0392b;--down:#2563a8;--warn:#b7791f;--ok:#2e7d4f;--grid:#e8ebef;--chip-bg:#f1f4f8;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#11151b;--panel:#1a2029;--fg:#e6e9ee;--muted:#9aa4b2;--line:#2c3440;--brand:#9cb6dc;--brand-fg:#0f1620;--up:#f0786a;--down:#7fb2ef;--warn:#e0b25a;--ok:#6cc792;--grid:#262d38;--chip-bg:#222a35;color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;font-size:15px;line-height:1.6;-webkit-text-size-adjust:100%}
+.wrap{max-width:1080px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.lock{min-height:100vh;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-left,0px))}
+.lock form{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:28px 24px;width:min(100%,360px);display:grid;gap:12px}
+.lock h1{margin:0;font-size:19px}
+.lock p{margin:0;color:var(--muted);font-size:13px}
+.lock input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+.lock button,.btn{font:inherit;font-weight:600;padding:10px 14px;border-radius:8px;border:1px solid var(--brand);background:var(--brand);color:var(--brand-fg);cursor:pointer}
+.lock .err{color:var(--up);font-size:13px;min-height:1.2em}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.head{background:var(--brand);color:var(--brand-fg);border-radius:10px;padding:18px 20px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between}
+.head h1{margin:0;font-size:clamp(20px,4.5vw,28px);line-height:1.2;letter-spacing:-.01em}
+.head .sub{opacity:.85;font-size:14px;margin-top:4px;font-variant-numeric:tabular-nums}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tools select{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid transparent;background:var(--panel);color:var(--fg);min-width:0;max-width:100%}
+.tools .btn{background:var(--panel);color:var(--fg);border-color:var(--panel)}
+.tools .btn[disabled]{opacity:.5;cursor:default}
+.msg{font-size:12px;color:var(--muted);margin-top:6px;min-height:1em}
+section{margin-top:26px}
+h2{font-size:17px;margin:0 0 10px;padding:6px 0 6px 10px;border-left:4px solid var(--brand);background:var(--chip-bg);border-radius:0 6px 6px 0}
+h2 .n{color:var(--muted);margin-right:8px;font-variant-numeric:tabular-nums}
+h3{font-size:14px;margin:14px 0 6px}
+.note{font-size:12.5px;color:var(--muted);margin:0 0 8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px}
+.tier-row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.tier-name{font-size:20px;font-weight:700}
+.meter{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-top:10px}
+.meter i{height:9px;border-radius:3px;background:var(--grid);display:block}
+.meter-l{display:grid;grid-template-columns:repeat(4,1fr);font-size:11.5px;color:var(--muted)}
+.headline{margin:10px 0 0;font-weight:500}
+ul.bul{margin:12px 0 0;padding-left:18px;display:grid;gap:6px}
+ul.flat{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+ul.flat li{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:baseline}
+.src{font-size:12px;color:var(--muted);margin-left:4px;white-space:nowrap}
+.src:hover{color:var(--fg)}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th{text-align:left;font-weight:600;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.num{text-align:right;white-space:nowrap}
+.item{font-weight:600;white-space:nowrap}
+.dim{color:var(--muted)}
+.small{font-size:12px;min-width:12rem}
+.up{color:var(--up);font-weight:600}.down{color:var(--down);font-weight:600}
+.chip{display:inline-block;padding:0 8px;border-radius:999px;border:1px solid currentColor;font-size:12px;white-space:nowrap;line-height:1.6}
+.chip.bad{color:var(--up)}.chip.warn{color:var(--warn)}.chip.ok{color:var(--down)}.chip.mute{color:var(--muted)}
+.tag{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:0 6px;white-space:nowrap}
+.paths{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px}
+.ph{display:flex;justify-content:space-between;gap:8px;margin-bottom:6px}
+.chain{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:12.5px}
+.step{background:var(--chip-bg);border:1px solid var(--line);border-radius:6px;padding:1px 7px}
+.lag{font-size:12px;color:var(--muted);margin:6px 0 0}
+.chart svg{display:block;width:100%;height:auto}
+.chart text{font-family:inherit}
+ol.srcs{font-size:12px;color:var(--muted);padding-left:18px;word-break:break-all}
+ol.srcs a{color:inherit}
+.disc{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px;margin-top:20px}
+a{color:inherit}
+</style>
+</head>
+<body>
+<div id="lock" class="lock">
+  <form id="lockform" autocomplete="off">
+    <h1>포장재 원자재 주간 모니터링</h1>
+    <p>팀 공용 비밀번호를 입력하세요.</p>
+    <input id="pw" type="password" aria-label="비밀번호" autocomplete="current-password" required>
+    <button type="submit">열기</button>
+    <div class="err" id="err" role="alert"></div>
+  </form>
+</div>
+<div id="app" class="wrap" hidden>
+  <header class="head">
+    <div><h1>포장재 원자재 주간 모니터링</h1><div class="sub" id="sub"></div></div>
+    <div>
+      <div class="tools">
+        <select id="week" aria-label="리포트 주차"></select>
+        <button class="btn" id="pdfbtn" type="button">PDF 받기</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </div>
+  </header>
+  <section id="s1"><h2><span class="n">1</span>상황 요약</h2>
+    <div class="card"><div class="tier-row"><div class="tier-name" id="tier"></div><div class="dim">원가 압력 판단: <b id="stance"></b></div></div>
+      <div class="meter" id="meter"><i></i><i></i><i></i><i></i></div><div class="meter-l"><span>1 안정</span><span>2 주의</span><span>3 경계</span><span>4 위기</span></div>
+      <p class="headline" id="headline"></p></div>
+    <ul class="bul" id="l-sum"></ul></section>
+  <section id="s2"><h2><span class="n">2</span>원자재 시세표</h2><p class="note">전주비·4주비 빨간색은 원가 상승, 파란색은 하락. "—"는 공개 자료로 확인하지 못한 값.</p><div class="card" id="prices"></div></section>
+  <section id="s3"><h2><span class="n">3</span>전주 대비 주요 변화</h2><div class="grid"><div class="card"><h3 style="margin-top:0">전주 대비 변동률</h3><div class="chart" id="chart"></div></div><div class="card"><h3 style="margin-top:0">변동 요인</h3><ul class="flat" id="l-drv"></ul></div></div></section>
+  <section id="s4"><h2><span class="n">4</span>주요지표 변동 전망</h2><p class="note">향후 1–4주 방향. 확정적 전망이 아닌 참고 정보입니다.</p><div class="card tw"><table id="t-out"><thead><tr><th>지표</th><th>방향</th><th>전망</th><th>근거</th></tr></thead><tbody></tbody></table></div></section>
+  <section id="s5"><h2><span class="n">5</span>원료 → 포장재 원가 전파경로</h2><p class="note">시차는 업계 계약·재고 관행에 따른 추정치입니다.</p><div class="paths" id="paths"></div></section>
+  <section id="s6"><h2><span class="n">6</span>포장재별 영향 매트릭스</h2><p class="note">원가 상승 압력의 크기. 단기 0–4주, 중기 1–3개월, 장기 3개월 이후.</p><div class="card tw"><table id="t-mx"><thead><tr><th>포장재</th><th>주요 원료</th><th>방향</th><th>단기</th><th>중기</th><th>장기</th><th>전주 대비</th><th>코멘트</th></tr></thead><tbody></tbody></table></div></section>
+  <section id="s7"><h2><span class="n">7</span>취약점 진단 및 모니터링 권고</h2><div class="grid"><div class="card"><h3 style="margin-top:0">향후 주시 포인트</h3><ul class="flat" id="l-watch"></ul></div><div class="card"><h3 style="margin-top:0">원가 취약점</h3><ul class="flat" id="l-vuln"></ul></div></div><div class="card" style="margin-top:14px"><h3 style="margin-top:0">구매 참고 의견</h3><ul class="flat" id="l-reco"></ul></div></section>
+  <section id="s8"><h2><span class="n">8</span>출처</h2><ol class="srcs" id="srcs"></ol>
+    <p class="disc">본 자료는 공개 기사와 시세 자료를 바탕으로 생성형 AI(Claude)가 작성한 참고 자료이며, 공식 의견이나 확정적 구매 권고가 아닙니다. 유료 지표(ICIS·Platts 등)는 공개 기사에 인용된 수치만 사용했습니다.</p></section>
+</div>
+<script>
+(function(){
+const META={"salt": "pTAE1zz2/gYqpXJxjeAJZA==", "iter": 250000, "v": 1};
+const $=s=>document.querySelector(s);
+const GROUPS=["원유·환율","기초유분","합성수지","점착제·지류"];
+const TONE={"상승":"bad","상승 압력":"bad","활성":"bad","높음":"bad","▲":"bad","혼조":"warn","주의":"warn","보통":"warn","◆":"warn","하락":"ok","완화":"ok","낮음":"ok","▼":"ok","보합":"mute","안정":"mute","—":"mute"};
+const TIERC=["var(--ok)","var(--warn)","var(--warn)","var(--up)"];
+let KEY=null,D=null,week=null;
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function derive(pw){const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);return crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(META.salt),iterations:META.iter,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);}
+async function dec(buf){const u=new Uint8Array(buf);return crypto.subtle.decrypt({name:"AES-GCM",iv:u.slice(0,12)},KEY,u.slice(12));}
+async function unlock(pw){KEY=await derive(pw);const r=await fetch("data.bin",{cache:"no-store"});if(!r.ok)throw new Error("load");const plain=await dec(await r.arrayBuffer());D=JSON.parse(new TextDecoder().decode(plain));}
+function el(t,cls,txt){const e=document.createElement(t);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
+function chip(t){return el("span","chip "+(TONE[t]||"mute"),t);}
+function link(url,label){const a=el("a","src","— "+(label||"출처"));a.href=url;a.target="_blank";a.rel="noopener";return a;}
+function fnum(v,u){if(v==null)return"—";const d=u==="USD/bbl"?2:(u==="KRW/USD"?1:(Math.abs(v)<100?2:0));return Number(v).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});}
+function pct(v,p){return(v==null||p==null||p===0)?null:v/p-1;}
+function fpct(x){if(x==null)return"—";return(x>0?"+":x<0?"−":"")+Math.abs(x*100).toFixed(1)+"%";}
+function pcls(x){return(x==null||Math.abs(x)<0.0005)?"":(x>0?"up":"down");}
+function mmdd(s){return s?s.slice(5).replace("-","/"):"—";}
+function td(c,cls){const e=el("td",cls);if(c instanceof Node)e.append(c);else e.textContent=c==null?"":c;return e;}
+function rows(n){return D[n].filter(r=>r.report_date===week);}
+function notes(sec){return rows("notes").filter(r=>r.section===sec).sort((a,b)=>a.order-b.order);}
+function render(){
+  const s=D.summary.find(r=>r.report_date===week);
+  $("#sub").textContent=week.replace(/-/g,".")+" · "+s.week_label;
+  $("#tier").textContent=s.tier_name;$("#tier").style.color=TIERC[s.tier-1];
+  $("#stance").textContent=s.stance;$("#headline").textContent=s.headline;
+  document.querySelectorAll("#meter i").forEach((e,i)=>e.style.background=i<s.tier?TIERC[s.tier-1]:"");
+  const sum=$("#l-sum");sum.replaceChildren(...notes("요약").map(n=>{const li=el("li",null,n.text);if(n.source_url)li.append(link(n.source_url,n.source));return li;}));
+  const flat=(id,sec,isChip)=>{$(id).replaceChildren(...notes(sec).map(n=>{const li=el("li");li.append(isChip?chip(n.tag||"—"):el("span","tag",n.tag));const b=el("span",null,n.text);if(n.source_url)b.append(link(n.source_url,n.source));li.append(b);return li;}));};
+  flat("#l-drv","변동요인",true);flat("#l-watch","주시");flat("#l-vuln","취약점");flat("#l-reco","권고");
+  const P=rows("prices");P.forEach(r=>{r._c=pct(r.value,r.prev);r._w=pct(r.value,r.wk4);});
+  const host=$("#prices");host.replaceChildren();
+  GROUPS.forEach(g=>{const gr=P.filter(r=>r.group===g);if(!gr.length)return;host.append(el("h3",null,g));const w=el("div","tw");const t=el("table");
+    const hr=t.createTHead().insertRow();["품목","기준","단위","최신","전주","전주비","4주 전","4주비","기준일","관련 포장재","비고","출처"].forEach((h,i)=>{const th=el("th",[3,4,5,6,7].includes(i)?"num":null,h);hr.append(th);});
+    const tb=t.createTBody();gr.forEach(r=>{const tr=tb.insertRow();const a=el("a",null,r.source||"");if(r.source_url){a.href=r.source_url;a.target="_blank";a.rel="noopener";}
+      tr.append(td(r.item,"item"),td(r.basis,"dim"),td(r.unit,"dim"),td(fnum(r.value,r.unit),"num"),td(fnum(r.prev,r.unit),"num dim"),td(fpct(r._c),"num "+pcls(r._c)),td(fnum(r.wk4,r.unit),"num dim"),td(fpct(r._w),"num "+pcls(r._w)),td(mmdd(r.as_of),"dim"),td(r.used_for),td(r.note||"","dim small"),td(a,"dim"));});
+    w.append(t);host.append(w);});
+  drawChart(P);
+  const ot=$("#t-out tbody");ot.replaceChildren(...rows("outlook").sort((a,b)=>a.order-b.order).map(r=>{const tr=el("tr");tr.append(td(r.indicator,"item"),td(chip(r.direction)),td(r.outlook),td(r.basis,"dim small"));return tr;}));
+  $("#paths").replaceChildren(...rows("paths").sort((a,b)=>a.order-b.order).map(r=>{const c=el("div","card");const h=el("div","ph");h.append(el("b",null,r.product),chip(r.status));const ch=el("div","chain");r.chain.split(" → ").forEach((x,i,arr)=>{ch.append(el("span","step",x));if(i<arr.length-1)ch.append(el("span","dim","→"));});c.append(h,ch,el("p","lag","시차 "+r.lag),el("p",null,r.note));c.lastChild.style.margin="4px 0 0";return c;}));
+  const mt=$("#t-mx tbody");mt.replaceChildren(...rows("matrix").sort((a,b)=>a.order-b.order).map(r=>{const tr=el("tr");tr.append(td(r.product,"item"),td(r.inputs,"dim"),td(chip(r.direction)),td(chip(r.short)),td(chip(r.mid)),td(chip(r.long)),td(r.change,"num "+(r.change==="▲"?"up":r.change==="▼"?"down":"dim")),td(r.comment,"small"));return tr;}));
+  const seen=new Map();[...P,...rows("notes")].forEach(r=>{if(r.source_url&&!seen.has(r.source_url))seen.set(r.source_url,r.source||"");});
+  $("#srcs").replaceChildren(...[...seen].map(([u,n])=>{const li=el("li");const a=el("a",null,u);a.href=u;a.target="_blank";a.rel="noopener";li.append(n?n+" · ":"",a);return li;}));
+  const has=(D.pdfs||[]).includes(week);$("#pdfbtn").disabled=!has;$("#pdfbtn").textContent=has?"PDF 받기":"PDF 없음";$("#msg").textContent="";
+}
+function drawChart(P){
+  const host=$("#chart");const rs=P.filter(r=>r._c!=null).sort((a,b)=>b._c-a._c);host.replaceChildren();
+  if(!rs.length){host.append(el("p","note","전주 값이 확인된 품목이 없습니다."));return;}
+  const NS="http://www.w3.org/2000/svg";const W=640,rh=26,lw=130,vw=58,H=rs.length*rh+26;
+  const ext=Math.max(...rs.map(r=>Math.abs(r._c)))||0.01;const steps=[0.01,0.02,0.05,0.1,0.2,0.5,1];let st=steps.find(s=>ext/s<=3)||1;const lim=Math.ceil(ext/st)*st;
+  const x=v=>lw+(v+lim)/(2*lim)*(W-lw-vw);
+  const svg=document.createElementNS(NS,"svg");svg.setAttribute("viewBox","0 0 "+W+" "+H);svg.setAttribute("role","img");svg.setAttribute("aria-label","전주 대비 변동률 막대 차트");
+  const mk=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);svg.append(e);return e;};
+  for(let t=-lim;t<=lim+1e-9;t+=st){mk("line",{x1:x(t),x2:x(t),y1:0,y2:H-18,stroke:Math.abs(t)<1e-9?"var(--muted)":"var(--grid)","stroke-width":1});const tx=mk("text",{x:x(t),y:H-4,"font-size":11,fill:"var(--muted)","text-anchor":"middle"});tx.textContent=Math.abs(t)<1e-9?"0%":fpct(t);}
+  rs.forEach((r,i)=>{const y=i*rh+4,v=r._c,col=v>0.0005?"var(--up)":v<-0.0005?"var(--down)":"var(--muted)";
+    const l=mk("text",{x:lw-8,y:y+13,"font-size":12,fill:"var(--fg)","text-anchor":"end"});l.textContent=r.item.length>14?r.item.slice(0,13)+"…":r.item;
+    const x0=Math.min(x(0),x(v)),wv=Math.max(2,Math.abs(x(v)-x(0)));const b=mk("rect",{x:x0,y:y+3,width:wv,height:14,rx:3,fill:col});const tt=document.createElementNS(NS,"title");tt.textContent=r.item+": "+fnum(r.prev,r.unit)+" → "+fnum(r.value,r.unit)+" "+r.unit+" ("+fpct(v)+")";b.append(tt);
+    const vt=mk("text",{x:W-vw+6,y:y+13,"font-size":12,fill:col});vt.textContent=fpct(v);});
+  host.append(svg);
+}
+async function getPdf(){const msg=$("#msg");msg.textContent="PDF를 준비하는 중…";try{const r=await fetch("pdf/"+week+".bin",{cache:"no-store"});if(!r.ok)throw 0;const plain=await dec(await r.arrayBuffer());const url=URL.createObjectURL(new Blob([plain],{type:"application/pdf"}));const a=document.createElement("a");a.href=url;a.download="포장재_원자재_주간모니터링_"+week+".pdf";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);msg.textContent="내려받기를 시작했습니다.";}catch(e){msg.textContent="PDF를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";}}
+function start(){
+  const weeks=D.summary.map(r=>r.report_date).sort().reverse();
+  const sel=$("#week");sel.replaceChildren(...weeks.map(w=>{const s=D.summary.find(r=>r.report_date===w);return new Option(w.replace(/-/g,".")+" · "+s.week_label,w);}));
+  let h=location.hash.slice(1);week=weeks.includes(h)?h:weeks[0];sel.value=week;
+  sel.addEventListener("change",()=>{week=sel.value;history.replaceState(null,"","#"+week);render();window.scrollTo(0,0);});
+  $("#pdfbtn").addEventListener("click",getPdf);
+  $("#lock").hidden=true;$("#app").hidden=false;render();
+}
+$("#lockform").addEventListener("submit",async e=>{e.preventDefault();const pw=$("#pw").value;$("#err").textContent="확인 중…";
+  try{await unlock(pw);try{sessionStorage.setItem("pkgw",pw);}catch(_){}$("#err").textContent="";start();}catch(_){KEY=null;$("#err").textContent="비밀번호가 맞지 않습니다.";}});
+(async()=>{let pw=null;try{pw=sessionStorage.getItem("pkgw");}catch(_){}if(pw){try{await unlock(pw);start();}catch(_){}}})();
+})();
+</script>
+</body>
+</html>
