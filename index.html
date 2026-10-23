@@ -122,9 +122,9 @@ a{color:inherit}
 </div>
 <script>
 (function(){
-const META={"salt": "gLAh0w2QyGnfcJMG0vkR9w==", "iter": 250000, "v": 1};
+const META={"salt": "W1uU45WMJs5u3qfB9aE6Dg==", "iter": 250000, "v": 1};
 const $=s=>document.querySelector(s);
-const GROUPS=["원유·환율","기초유분","합성수지","점착제·지류"];
+const GROUPS=["원유·환율","기초유분","합성수지","점착제·지류","물류"];
 const TONE={"상승":"bad","상승 압력":"bad","활성":"bad","높음":"bad","▲":"bad","혼조":"warn","주의":"warn","보통":"warn","◆":"warn","하락":"ok","완화":"ok","낮음":"ok","▼":"ok","보합":"mute","안정":"mute","—":"mute"};
 const TIERC=["var(--ok)","var(--warn)","var(--warn)","var(--up)"];
 let KEY=null,D=null,week=null;
@@ -135,7 +135,7 @@ async function unlock(pw){KEY=await derive(pw);const r=await fetch("data.bin",{c
 function el(t,cls,txt){const e=document.createElement(t);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
 function chip(t){return el("span","chip "+(TONE[t]||"mute"),t);}
 function link(url,label){const a=el("a","src","— "+(label||"출처"));a.href=url;a.target="_blank";a.rel="noopener";return a;}
-function fnum(v,u){if(v==null)return"—";const d=u==="USD/bbl"?2:(u==="KRW/USD"?1:(Math.abs(v)<100?2:0));return Number(v).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});}
+function fnum(v,u){if(v==null)return"—";const d=u==="USD/bbl"?2:((u==="KRW/USD"||u==="KRW/L")?1:(u==="pt"?(Number(v)%1?2:0):(Math.abs(v)<100?2:0)));return Number(v).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});}
 function pct(v,p){return(v==null||p==null||p===0)?null:v/p-1;}
 function fpct(x){if(x==null)return"—";return(x>0?"+":x<0?"−":"")+Math.abs(x*100).toFixed(1)+"%";}
 function pcls(x){return(x==null||Math.abs(x)<0.0005)?"":(x>0?"up":"down");}
