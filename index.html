@@ -74,6 +74,9 @@ tr:last-child td{border-bottom:0}
 .chain{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:12.5px}
 .step{background:var(--chip-bg);border:1px solid var(--line);border-radius:6px;padding:1px 7px}
 .lag{font-size:12px;color:var(--muted);margin:6px 0 0}
+.lthead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}.seg button{font:inherit;font-size:12px;padding:3px 12px;background:transparent;color:var(--muted);border:0;cursor:pointer}.seg button+button{border-left:1px solid var(--line)}.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.ref{color:#b7791f}
 .chart svg{display:block;width:100%;height:auto}
 .chart text{font-family:inherit}
 ol.srcs{font-size:12px;color:var(--muted);padding-left:18px;word-break:break-all}
@@ -113,6 +116,7 @@ a{color:inherit}
     <ul class="bul" id="l-sum"></ul></section>
   <section id="s2"><h2><span class="n">2</span>원자재 시세표</h2><p class="note">전주비·4주비 빨간색은 원가 상승, 파란색은 하락. "—"는 공개 자료로 확인하지 못한 값.</p><div class="card" id="prices"></div></section>
   <section id="s3"><h2><span class="n">3</span>전주 대비 주요 변화</h2><div class="grid"><div class="card"><h3 style="margin-top:0">전주 대비 변동률</h3><div class="chart" id="chart"></div></div><div class="card"><h3 style="margin-top:0">변동 요인</h3><ul class="flat" id="l-drv"></ul></div></div></section>
+  <section id="s3b"><h2><span class="n">3-2</span>중장기 주요 변화 (6개월 · 3개월 · 1개월 전 대비)</h2><p class="note">현재 값을 약 6개월·3개월·1개월 전 같은 기준 값과 비교. 빨간색은 원가 상승, 파란색은 하락. ※는 평가기관·계열이 달라 참고용, "—"는 공개 자료로 확인하지 못한 값.</p><div class="card"><div class="lthead"><h3 style="margin:0">기간별 변동률</h3><div class="seg" id="ltseg"><button type="button" data-m="6" aria-pressed="true">6개월</button><button type="button" data-m="3" aria-pressed="false">3개월</button><button type="button" data-m="1" aria-pressed="false">1개월</button></div></div><div class="chart" id="ltchart"></div></div><div class="card" id="lt" style="margin-top:14px"></div></section>
   <section id="s4"><h2><span class="n">4</span>주요지표 변동 전망</h2><p class="note">향후 1–4주 방향. 확정적 전망이 아닌 참고 정보입니다.</p><div class="card tw"><table id="t-out"><thead><tr><th>지표</th><th>방향</th><th>전망</th><th>근거</th></tr></thead><tbody></tbody></table></div></section>
   <section id="s5"><h2><span class="n">5</span>원료 → 포장재 원가 전파경로</h2><p class="note">시차는 업계 계약·재고 관행에 따른 추정치입니다.</p><div class="paths" id="paths"></div></section>
   <section id="s6"><h2><span class="n">6</span>포장재별 영향 매트릭스</h2><p class="note">원가 상승 압력의 크기. 단기 0–4주, 중기 1–3개월, 장기 3개월 이후.</p><div class="card tw"><table id="t-mx"><thead><tr><th>포장재</th><th>주요 원료</th><th>방향</th><th>단기</th><th>중기</th><th>장기</th><th>전주 대비</th><th>코멘트</th></tr></thead><tbody></tbody></table></div></section>
@@ -122,7 +126,7 @@ a{color:inherit}
 </div>
 <script>
 (function(){
-const META={"salt": "lTjfcjZb9i9o6m0N83ex6A==", "iter": 250000, "v": 1};
+const META={"salt": "oJk+IS9upuxUxdEUbQHthQ==", "iter": 250000, "v": 1};
 const $=s=>document.querySelector(s);
 const GROUPS=["원유·환율","기초유분","합성수지","점착제·지류","물류"];
 const TONE={"상승":"bad","상승 압력":"bad","활성":"bad","높음":"bad","▲":"bad","혼조":"warn","주의":"warn","보통":"warn","◆":"warn","하락":"ok","완화":"ok","낮음":"ok","▼":"ok","보합":"mute","안정":"mute","—":"mute"};
@@ -160,13 +164,49 @@ function render(){
       tr.append(td(r.item,"item"),td(r.basis,"dim"),td(r.unit,"dim"),td(fnum(r.value,r.unit),"num"),td(fnum(r.prev,r.unit),"num dim"),td(fpct(r._c),"num "+pcls(r._c)),td(fnum(r.wk4,r.unit),"num dim"),td(fpct(r._w),"num "+pcls(r._w)),td(mmdd(r.as_of),"dim"),td(r.used_for),td(r.note||"","dim small"),td(a,"dim"));});
     w.append(t);host.append(w);});
   drawChart(P);
+  renderLT();
   const ot=$("#t-out tbody");ot.replaceChildren(...rows("outlook").sort((a,b)=>a.order-b.order).map(r=>{const tr=el("tr");tr.append(td(r.indicator,"item"),td(chip(r.direction)),td(r.outlook),td(r.basis,"dim small"));return tr;}));
   $("#paths").replaceChildren(...rows("paths").sort((a,b)=>a.order-b.order).map(r=>{const c=el("div","card");const h=el("div","ph");h.append(el("b",null,r.product),chip(r.status));const ch=el("div","chain");r.chain.split(" → ").forEach((x,i,arr)=>{ch.append(el("span","step",x));if(i<arr.length-1)ch.append(el("span","dim","→"));});c.append(h,ch,el("p","lag","시차 "+r.lag),el("p",null,r.note));c.lastChild.style.margin="4px 0 0";return c;}));
   const mt=$("#t-mx tbody");mt.replaceChildren(...rows("matrix").sort((a,b)=>a.order-b.order).map(r=>{const tr=el("tr");tr.append(td(r.product,"item"),td(r.inputs,"dim"),td(chip(r.direction)),td(chip(r.short)),td(chip(r.mid)),td(chip(r.long)),td(r.change,"num "+(r.change==="▲"?"up":r.change==="▼"?"down":"dim")),td(r.comment,"small"));return tr;}));
   const seen=new Map();[...P,...rows("notes")].forEach(r=>{if(r.source_url&&!seen.has(r.source_url))seen.set(r.source_url,r.source||"");});
+  (D.longterm||[]).filter(r=>r.report_date===week).forEach(r=>{[6,3,1].forEach(m=>{const u=r["m"+m+"_url"];if(u&&!seen.has(u))seen.set(u,(r["m"+m+"_source"]||"")+" ("+m+"개월 전 비교)");});});
   $("#srcs").replaceChildren(...[...seen].map(([u,n])=>{const li=el("li");const a=el("a",null,u);a.href=u;a.target="_blank";a.rel="noopener";li.append(n?n+" · ":"",a);return li;}));
   const has=(D.pdfs||[]).includes(week);$("#pdfbtn").disabled=!has;$("#pdfbtn").textContent=has?"PDF 받기":"PDF 없음";$("#msg").textContent="";
 }
+let LTM=6;
+function renderLT(){
+  const L=(D.longterm||[]).filter(r=>r.report_date===week).sort((a,b)=>a.order-b.order);
+  L.forEach(r=>{[6,3,1].forEach(m=>{r["_m"+m]=pct(r.value,r["m"+m]);});});
+  const host=$("#lt");host.replaceChildren();
+  if(!L.length){host.append(el("p","note","이 주차에는 중장기 비교 자료가 없습니다. 2026-11-02 주차부터 제공합니다."));drawLT(L);return;}
+  GROUPS.forEach(g=>{const gr=L.filter(r=>r.group===g);if(!gr.length)return;host.append(el("h3",null,g));const w=el("div","tw");const t=el("table");
+    const hr=t.createTHead().insertRow();["품목","단위","현재","기준일","6개월 전","6개월비","3개월 전","3개월비","1개월 전","1개월비","비고"].forEach((h,i)=>{hr.append(el("th",[2,4,5,6,7,8,9].includes(i)?"num":null,h));});
+    const tb=t.createTBody();gr.forEach(r=>{const tr=tb.insertRow();
+      const vc=m=>{const c=td(fnum(r["m"+m],r.unit),"num dim");c.title=r["m"+m]==null?(r["m"+m+"_note"]||"공개 자료 미확인"):(r["m"+m+"_date"]+" · "+(r["m"+m+"_source"]||"")+(r["m"+m+"_note"]?" · "+r["m"+m+"_note"]:""));return c;};
+      const pc=m=>{const c=td(fpct(r["_m"+m]),"num "+pcls(r["_m"+m]));if(r["m"+m+"_ref"])c.append(el("span","ref"," ※"));return c;};
+      const miss=[6,3,1].filter(m=>r["m"+m]==null);const nt=[r.value_note,...[6,3,1].filter(m=>r["m"+m+"_ref"]).map(m=>m+"개월 ※ "+r["m"+m+"_note"]),miss.length?"미확인: "+miss.join("·")+"개월":""].filter(Boolean).join(" / ");
+      tr.append(td(r.item,"item"),td(r.unit,"dim"),td(fnum(r.value,r.unit),"num"),td(mmdd(r.as_of),"dim"),vc(6),pc(6),vc(3),pc(3),vc(1),pc(1),td(nt,"dim small"));});
+    w.append(t);host.append(w);});
+  drawLT(L);
+}
+function drawLT(L){
+  const host=$("#ltchart");host.replaceChildren();const k="_m"+LTM;const rs=L.filter(r=>r[k]!=null).sort((a,b)=>b[k]-a[k]);
+  if(!rs.length){host.append(el("p","note",L.length?"이 기간은 비교 값이 확인된 품목이 없습니다.":"이 주차에는 중장기 비교 자료가 없습니다."));return;}
+  const NS="http://www.w3.org/2000/svg";const W=640,rh=26,lw=150,vw=66,H=rs.length*rh+26;
+  const lo=Math.min(0,...rs.map(r=>r[k])),hi=Math.max(0,...rs.map(r=>r[k]));const span=(hi-lo)||0.01;
+  const steps=[0.01,0.02,0.05,0.1,0.2,0.25,0.5,1];const st=steps.find(s=>span/s<=6)||1;const a0=Math.floor(lo/st)*st,a1=Math.ceil(hi/st)*st;
+  const x=v=>lw+(v-a0)/((a1-a0)||1)*(W-lw-vw);
+  const svg=document.createElementNS(NS,"svg");svg.setAttribute("viewBox","0 0 "+W+" "+H);svg.setAttribute("role","img");svg.setAttribute("aria-label",LTM+"개월 전 대비 변동률 막대 차트");
+  const mk=(t,a)=>{const e=document.createElementNS(NS,t);for(const q in a)e.setAttribute(q,a[q]);svg.append(e);return e;};
+  for(let t=a0;t<=a1+1e-9;t+=st){mk("line",{x1:x(t),x2:x(t),y1:0,y2:H-18,stroke:Math.abs(t)<1e-9?"var(--muted)":"var(--grid)","stroke-width":1});const tx=mk("text",{x:x(t),y:H-4,"font-size":11,fill:"var(--muted)","text-anchor":"middle"});tx.textContent=Math.abs(t)<1e-9?"0%":(t>0?"+":"−")+Math.abs(t*100).toFixed(0)+"%";}
+  rs.forEach((r,i)=>{const y=i*rh+4,v=r[k],col=v>0.0005?"var(--up)":v<-0.0005?"var(--down)":"var(--muted)";
+    const nm=r.item.replace(/\s*\((한국형|상하이)[^)]*\)/,"")+(r["m"+LTM+"_ref"]?" ※":"");
+    const l=mk("text",{x:lw-8,y:y+13,"font-size":12,fill:"var(--fg)","text-anchor":"end"});l.textContent=nm.length>16?nm.slice(0,15)+"…":nm;
+    const x0=Math.min(x(0),x(v)),wv=Math.max(2,Math.abs(x(v)-x(0)));const b=mk("rect",{x:x0,y:y+3,width:wv,height:14,rx:3,fill:col,opacity:r["m"+LTM+"_ref"]?0.55:1});const tt=document.createElementNS(NS,"title");tt.textContent=r.item+": "+fnum(r["m"+LTM],r.unit)+" ("+mmdd(r["m"+LTM+"_date"])+") → "+fnum(r.value,r.unit)+" ("+mmdd(r.as_of)+") "+r.unit+" ("+fpct(v)+")";b.append(tt);
+    const vt=mk("text",{x:Math.max(x(0),x(v))+6,y:y+13,"font-size":12,fill:col});vt.textContent=fpct(v);});
+  host.append(svg);
+}
+document.querySelectorAll("#ltseg button").forEach(b=>b.addEventListener("click",()=>{LTM=Number(b.dataset.m);document.querySelectorAll("#ltseg button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));if(D)renderLT();}));
 function drawChart(P){
   const host=$("#chart");const rs=P.filter(r=>r._c!=null).sort((a,b)=>b._c-a._c);host.replaceChildren();
   if(!rs.length){host.append(el("p","note","전주 값이 확인된 품목이 없습니다."));return;}
