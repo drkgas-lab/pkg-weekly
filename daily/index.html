@@ -85,6 +85,7 @@ section { display: grid; gap: 12px; min-width: 0; }
 .mark { width: 14px; height: 14px; flex: none; }
 .mark.teal { background: var(--teal); }
 .mark.mustard { background: var(--mustard); }
+.mark.ink { background: var(--block-black); outline: 1px solid var(--line); }
 h2 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
 .count { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
 
@@ -101,6 +102,11 @@ h2 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
 @media (max-width: 760px) { .eco-cols { grid-template-columns: 1fr; } .eco-col + .eco-col { border-left: 0; border-top: 1px solid var(--line); } }
 .num { font-family: var(--font-mono); font-size: 14px; font-weight: 600; text-align: right; padding-right: 12px; padding-top: 1px; font-variant-numeric: tabular-nums; color: var(--teal-ink); }
 .clients .num { color: var(--mustard-ink); }
+.peers .num { color: var(--ink-2); }
+.peer-sub { font-size: 13px; color: var(--muted); }
+.peers .list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); }
+.peers .list > .item { border-top: 0; border-bottom: 1px solid var(--line); }
+.peers .list > .item:last-child { border-bottom: 0; }
 .body { min-width: 0; display: grid; gap: 4px; }
 .hl { color: var(--ink); text-decoration: none; font-weight: 600; font-size: 15.5px; line-height: 1.45; overflow-wrap: anywhere; }
 .hl:hover { color: var(--teal-ink); text-decoration: underline; text-underline-offset: 3px; }
@@ -379,6 +385,22 @@ body { margin: 0; }
     if (!groups.length) { var e = el('div', 'sheet'); e.appendChild(el('p', 'quiet', '이 날짜에 담긴 고객사 뉴스가 없습니다.')); gw.appendChild(e); }
     s2.appendChild(gw);
     wrap.appendChild(s2);
+
+    var pe = b.peers || null;
+    if (pe) {
+      var s3 = el('section', 'peers'); s3.setAttribute('aria-labelledby', 'h-peer');
+      var hd3 = secHead('h-peer', 'ink', '동종업계 주요뉴스', arr(pe.items).length);
+      hd3.appendChild(el('span', 'peer-sub', arr(pe.companies).join(' · ')));
+      s3.appendChild(hd3);
+      var sh3 = el('div', 'sheet');
+      if (arr(pe.items).length) {
+        var ol3 = el('ol', 'list');
+        arr(pe.items).forEach(function (it, i) { ol3.appendChild(itemNode(it, i + 1)); });
+        sh3.appendChild(ol3);
+      } else sh3.appendChild(el('p', 'quiet', pe.note || '오늘은 특이 이슈가 없습니다.'));
+      s3.appendChild(sh3);
+      wrap.appendChild(s3);
+    }
     main.appendChild(wrap);
   }
 
@@ -389,6 +411,7 @@ body { margin: 0; }
     state.briefs.forEach(function (b) {
       arr(b.economy).forEach(function (it) { hits.push({ it: it, date: b.date, tag: '경제·물류' }); });
       arr(b.clients).forEach(function (g) { arr(g.items).forEach(function (it) { hits.push({ it: it, date: b.date, tag: g.group }); }); });
+      if (b.peers) arr(b.peers.items).forEach(function (it) { hits.push({ it: it, date: b.date, tag: '동종업계' }); });
     });
     hits = hits.filter(function (h) {
       return [h.it.title, h.it.summary, h.it.source, h.tag].join(' ').toLowerCase().indexOf(needle) !== -1;
@@ -473,6 +496,13 @@ body { margin: 0; }
       });
       out.push('');
     });
+    if (b.peers) {
+      out.push('■ 동종업계 주요뉴스 (' + arr(b.peers.companies).join('·') + ')');
+      if (!arr(b.peers.items).length) out.push('- ' + (b.peers.note || '특이 이슈 없음'));
+      arr(b.peers.items).forEach(function (it, i) {
+        out.push((i + 1) + '. ' + (it.kind === 'press' ? '(보도자료) ' : '') + it.title); if (it.summary) out.push('- ' + it.summary); if (it.url) out.push(it.url);
+      });
+    }
     return out.join('\n').trim();
   }
   function toast(msg) { var t = $('toast'); t.textContent = msg; clearTimeout(toast._t); toast._t = setTimeout(function () { t.textContent = ''; }, 2600); }
@@ -514,7 +544,7 @@ body { margin: 0; }
   });
   window.addEventListener('hashchange', function () { var d = fromHash(); if (d) go(d); });
 
-  var META = {"salt": "vHj28IetHgRlv2o0G5+Fuw==", "iter": 250000, "v": 1}, KEY = null, PWK = 'pkg_daily_pw';
+  var META = {"salt": "U/Alep8GD1FMb1Ut9zZuww==", "iter": 250000, "v": 1}, KEY = null, PWK = 'pkg_daily_pw';
   function b64(s) { return Uint8Array.from(atob(s), function (c) { return c.charCodeAt(0); }); }
   async function derive(pw) {
     var base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
