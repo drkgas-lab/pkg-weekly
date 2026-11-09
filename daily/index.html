@@ -37,7 +37,7 @@
   --block-black: #000000; --chip: #1a2321; color-scheme: dark;
 }
 body { background: var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.6; word-break: keep-all; }
-.wrap { max-width: 52rem; margin-inline: auto; padding-block: 24px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 26px; }
+.wrap { max-width: 68rem; margin-inline: auto; padding-block: 24px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 26px; }
 
 /* masthead */
 .mast { display: grid; gap: 16px; }
@@ -91,7 +91,14 @@ h2 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
 .sheet { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--radius); }
 .list { list-style: none; margin: 0; padding: 0; }
 .item { display: grid; grid-template-columns: 2.4rem 1fr; padding: 15px 18px 15px 10px; border-top: 1px solid var(--line); }
-.list > .item:first-child { border-top: 0; }
+.list > .item:first-child, .list > .cat-row:first-child { border-top: 0; }
+.eco-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.eco-col { min-width: 0; }
+.eco-col + .eco-col { border-left: 1px solid var(--line); }
+.cat-row { display: flex; align-items: center; gap: 8px; padding: 10px 18px 6px; border-top: 1px solid var(--line); background: var(--teal-soft); color: var(--teal-ink); font-size: 12.5px; font-weight: 700; letter-spacing: .02em; }
+.cat-row::before { content: ""; width: 6px; height: 6px; background: var(--teal); flex: none; }
+.cat-row .cat-n { margin-left: auto; font-family: var(--font-mono); font-weight: 500; font-size: 11.5px; opacity: .8; }
+@media (max-width: 760px) { .eco-cols { grid-template-columns: 1fr; } .eco-col + .eco-col { border-left: 0; border-top: 1px solid var(--line); } }
 .num { font-family: var(--font-mono); font-size: 14px; font-weight: 600; text-align: right; padding-right: 12px; padding-top: 1px; font-variant-numeric: tabular-nums; color: var(--teal-ink); }
 .clients .num { color: var(--mustard-ink); }
 .body { min-width: 0; display: grid; gap: 4px; }
@@ -112,7 +119,7 @@ h2 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
 .chip[aria-pressed="true"] { background: var(--mustard); color: #1a1200; border-color: var(--mustard); font-weight: 600; }
 .chip[aria-pressed="true"] .c { color: #1a1200; opacity: .7; }
 
-.groups { display: grid; gap: 12px; }
+.groups { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); align-items: start; }
 .group-head { display: flex; align-items: center; gap: 10px; padding: 10px 18px 9px; border-bottom: 1px solid var(--line); flex-wrap: wrap; border-left: 4px solid var(--mustard); border-top-left-radius: var(--radius); }
 .group-name { font-weight: 700; font-size: 15px; }
 .glogo { display: inline-flex; align-items: center; background: #ffffff; border-radius: 3px; padding: 3px 6px; flex: none; }
@@ -243,7 +250,7 @@ body { margin: 0; }
     var body = el('div', 'body');
     var url = safeUrl(it.url);
     var hl = el(url ? 'a' : 'span', 'hl');
-    var tag = (opts && opts.tag && opts.tag !== '경제·물류') ? opts.tag : it.cat;
+    var tag = (opts && opts.tag && opts.tag !== '경제·물류') ? opts.tag : (opts && opts.noCat ? null : it.cat);
     if (tag) hl.appendChild(el('span', 'badge cat', tag));
     if (it.kind === 'press') hl.appendChild(el('span', 'badge press', '보도자료'));
     hl.appendChild(document.createTextNode(it.title || '(제목 없음)'));
@@ -295,6 +302,14 @@ body { margin: 0; }
     return hd;
   }
 
+  var CAT_ORDER = ['운임·물류', '환율·거시', '에너지·원자재', '통상·규제', '공급망', '산업 동향', '이번 주 일정'];
+  function catRank(c) { var i = CAT_ORDER.indexOf(c); return i < 0 ? CAT_ORDER.length - 0.5 : i; }
+  function sortEco(list) {
+    return list.map(function (it, i) { return { it: it, i: i }; })
+      .sort(function (a, b) { return catRank(a.it.cat) - catRank(b.it.cat) || a.i - b.i; })
+      .map(function (x) { return x.it; });
+  }
+
   function renderDay(b) {
     var main = $('main'); main.textContent = '';
     var wrap = el('div', ''); wrap.style.display = 'grid'; wrap.style.gap = '30px';
@@ -302,10 +317,26 @@ body { margin: 0; }
     var s1 = el('section'); s1.setAttribute('aria-labelledby', 'h-eco');
     s1.appendChild(secHead('h-eco', 'teal', '오늘의 경제·물류', arr(b.economy).length));
     var sheet = el('div', 'sheet');
-    if (arr(b.economy).length) {
-      var ol = el('ol', 'list');
-      arr(b.economy).forEach(function (it, i) { ol.appendChild(itemNode(it, i + 1)); });
-      sheet.appendChild(ol);
+    var eco = sortEco(arr(b.economy));
+    if (eco.length) {
+      var half = Math.ceil(eco.length / 2);
+      var cols = el('div', 'eco-cols');
+      [eco.slice(0, half), eco.slice(half)].forEach(function (part, ci) {
+        var col = el('div', 'eco-col');
+        var ol = el('ol', 'list'); var last = null;
+        part.forEach(function (it, j) {
+          if ((it.cat || '') !== last) {
+            last = it.cat || '';
+            var row = el('li', 'cat-row'); row.setAttribute('role', 'presentation');
+            row.appendChild(document.createTextNode(last || '기타'));
+            row.appendChild(el('span', 'cat-n', eco.filter(function (x) { return (x.cat || '') === last; }).length + '건'));
+            ol.appendChild(row);
+          }
+          ol.appendChild(itemNode(it, ci * half + j + 1, { noCat: true }));
+        });
+        col.appendChild(ol); cols.appendChild(col);
+      });
+      sheet.appendChild(cols);
     } else sheet.appendChild(el('p', 'quiet', '이 날짜에 담긴 경제·물류 뉴스가 없습니다.'));
     s1.appendChild(sheet);
     wrap.appendChild(s1);
@@ -332,7 +363,6 @@ body { margin: 0; }
       var gh = el('div', 'group-head');
       if (LOGOS[g.group]) { var lg = el('span', 'glogo'); var im = document.createElement('img'); im.src = LOGOS[g.group]; im.alt = ''; lg.appendChild(im); gh.appendChild(lg); }
       gh.appendChild(el('span', 'group-name', g.group || ''));
-      if (g.focus) gh.appendChild(el('span', 'group-focus', '· ' + g.focus + ' 중점'));
       var nPress = arr(g.items).filter(function (x) { return x.kind === 'press'; }).length;
       gh.appendChild(el('span', 'group-count', arr(g.items).length + '건' + (nPress ? ' (보도자료 ' + nPress + ')' : '')));
       card.appendChild(gh);
@@ -428,8 +458,8 @@ body { margin: 0; }
   function shareText(b) {
     var out = [stampOf(b.date) + ' 경제·물류 주요뉴스', ''];
     out.push('■ 오늘의 경제·물류');
-    arr(b.economy).forEach(function (it, i) {
-      out.push((i + 1) + '. ' + it.title); if (it.summary) out.push('- ' + it.summary); if (it.url) out.push(it.url); out.push('');
+    sortEco(arr(b.economy)).forEach(function (it, i) {
+      out.push((i + 1) + '. [' + (it.cat || '') + '] ' + it.title); if (it.summary) out.push('- ' + it.summary); if (it.url) out.push(it.url); out.push('');
     });
     out.push('■ 고객사 주요뉴스');
     arr(b.clients).forEach(function (g) {
@@ -481,7 +511,7 @@ body { margin: 0; }
   });
   window.addEventListener('hashchange', function () { var d = fromHash(); if (d) go(d); });
 
-  var META = {"salt": "MjOs6JHSb0cZi2+1swhaqg==", "iter": 250000, "v": 1}, KEY = null, PWK = 'pkg_daily_pw';
+  var META = {"salt": "dY4RKvpJ1+LR6cug1bDXmQ==", "iter": 250000, "v": 1}, KEY = null, PWK = 'pkg_daily_pw';
   function b64(s) { return Uint8Array.from(atob(s), function (c) { return c.charCodeAt(0); }); }
   async function derive(pw) {
     var base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
