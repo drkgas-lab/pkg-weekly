@@ -262,6 +262,7 @@ body { margin: 0; }
     var tag = (opts && opts.tag && opts.tag !== '경제·물류') ? opts.tag : (opts && opts.noCat ? null : it.cat);
     if (tag) hl.appendChild(el('span', 'badge cat', tag));
     if (it.kind === 'press') hl.appendChild(el('span', 'badge press', '보도자료'));
+    if (it.kind === 'disclosure') hl.appendChild(el('span', 'badge press', '공시'));
     hl.appendChild(document.createTextNode(it.title || '(제목 없음)'));
     if (url) { hl.href = url; hl.target = '_blank'; hl.rel = 'noopener noreferrer'; hl.appendChild(el('span', 'ext', '↗')); }
     body.appendChild(hl);
@@ -390,7 +391,7 @@ body { margin: 0; }
     if (pe) {
       var s3 = el('section', 'peers'); s3.setAttribute('aria-labelledby', 'h-peer');
       var hd3 = secHead('h-peer', 'ink', '동종업계 주요뉴스', arr(pe.items).length);
-      hd3.appendChild(el('span', 'peer-sub', arr(pe.companies).join(' · ')));
+      hd3.appendChild(el('span', 'peer-sub', (pe.window ? pe.window + ' · ' : '') + arr(pe.companies).join(' · ')));
       s3.appendChild(hd3);
       var sh3 = el('div', 'sheet');
       if (arr(pe.items).length) {
@@ -497,10 +498,10 @@ body { margin: 0; }
       out.push('');
     });
     if (b.peers) {
-      out.push('■ 동종업계 주요뉴스 (' + arr(b.peers.companies).join('·') + ')');
+      out.push('■ 동종업계 주요뉴스 (' + (b.peers.window ? b.peers.window + ', ' : '') + arr(b.peers.companies).join('·') + ')');
       if (!arr(b.peers.items).length) out.push('- ' + (b.peers.note || '특이 이슈 없음'));
       arr(b.peers.items).forEach(function (it, i) {
-        out.push((i + 1) + '. ' + (it.kind === 'press' ? '(보도자료) ' : '') + it.title); if (it.summary) out.push('- ' + it.summary); if (it.url) out.push(it.url);
+        out.push((i + 1) + '. ' + (it.kind === 'press' ? '(보도자료) ' : it.kind === 'disclosure' ? '(공시) ' : '') + it.title); if (it.summary) out.push('- ' + it.summary); if (it.url) out.push(it.url);
       });
     }
     return out.join('\n').trim();
@@ -544,7 +545,7 @@ body { margin: 0; }
   });
   window.addEventListener('hashchange', function () { var d = fromHash(); if (d) go(d); });
 
-  var META = {"salt": "Vq26HiRoltTA0gR4g9lMtw==", "iter": 250000, "v": 1}, KEY = null, PWK = 'pkg_daily_pw';
+  var META = {"salt": "WAnzoJpZLDJAk04bzKzJog==", "iter": 250000, "v": 1}, KEY = null, PWK = 'pkg_daily_pw';
   function b64(s) { return Uint8Array.from(atob(s), function (c) { return c.charCodeAt(0); }); }
   async function derive(pw) {
     var base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
