@@ -77,6 +77,8 @@ tr:last-child td{border-bottom:0}
 .lthead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}.seg button{font:inherit;font-size:12px;padding:3px 12px;background:transparent;color:var(--muted);border:0;cursor:pointer}.seg button+button{border-left:1px solid var(--line)}.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
 .ref{color:#b7791f}
+.brief{border-left:3px solid var(--fg)}.brief .bh{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}.brief .bh h2{font-size:17px}#brieftext{margin:0;line-height:1.85}
+sup.fn{font-size:.68em;line-height:0;margin-left:1px;white-space:nowrap}sup.fn a{color:var(--muted);text-decoration:none}sup.fn a:hover{color:var(--fg);text-decoration:underline}
 .chart svg{display:block;width:100%;height:auto}
 .chart text{font-family:inherit}
 ol.srcs{font-size:12px;color:var(--muted);padding-left:18px;word-break:break-all}
@@ -109,6 +111,7 @@ a{color:inherit}
       <div class="msg" id="msg"></div><div class="msg" id="iosHint" hidden>아이폰: Safari 하단 공유 버튼 → '홈 화면에 추가'를 누르면 앱으로 설치됩니다.</div>
     </div>
   </header>
+  <section id="brief" hidden><div class="card brief"><div class="bh"><h2 style="margin:0;border:0;padding:0;background:none">📌 주요기사 요약</h2><span class="dim" id="briefdate"></span></div><p id="brieftext"></p></div></section>
   <section id="s1"><h2><span class="n">1</span>상황 요약</h2>
     <div class="card"><div class="tier-row"><div class="tier-name" id="tier"></div><div class="dim">원가 압력 판단: <b id="stance"></b></div></div>
       <div class="meter" id="meter"><i></i><i></i><i></i><i></i></div><div class="meter-l"><span>1 안정</span><span>2 주의</span><span>3 경계</span><span>4 위기</span></div>
@@ -121,12 +124,12 @@ a{color:inherit}
   <section id="s5"><h2><span class="n">5</span>원료 → 포장재 원가 전파경로</h2><p class="note">시차는 업계 계약·재고 관행에 따른 추정치입니다.</p><div class="paths" id="paths"></div></section>
   <section id="s6"><h2><span class="n">6</span>포장재별 영향 매트릭스</h2><p class="note">원가 상승 압력의 크기. 단기 0–4주, 중기 1–3개월, 장기 3개월 이후.</p><div class="card tw"><table id="t-mx"><thead><tr><th>포장재</th><th>주요 원료</th><th>방향</th><th>단기</th><th>중기</th><th>장기</th><th>전주 대비</th><th>코멘트</th></tr></thead><tbody></tbody></table></div></section>
   <section id="s7"><h2><span class="n">7</span>취약점 진단 및 모니터링 권고</h2><div class="grid"><div class="card"><h3 style="margin-top:0">향후 주시 포인트</h3><ul class="flat" id="l-watch"></ul></div><div class="card"><h3 style="margin-top:0">원가 취약점</h3><ul class="flat" id="l-vuln"></ul></div></div><div class="card" style="margin-top:14px"><h3 style="margin-top:0">구매 참고 의견</h3><ul class="flat" id="l-reco"></ul></div></section>
-  <section id="s8"><h2><span class="n">8</span>출처</h2><ol class="srcs" id="srcs"></ol>
+  <section id="s8"><h2><span class="n">8</span>출처</h2><p class="note">본문의 작은 번호를 누르면 해당 기사로 바로 이동합니다.</p><ol class="srcs" id="srcs"></ol>
     <p class="disc">본 자료는 공개 기사와 시세 자료를 바탕으로 생성형 AI(Claude)가 작성한 참고 자료이며, 공식 의견이나 확정적 구매 권고가 아닙니다. 유료 지표(ICIS·Platts 등)는 공개 기사에 인용된 수치만 사용했습니다.</p></section>
 </div>
 <script>
 (function(){
-const META={"salt": "T8eTCMChUCsb/Sct1CzfyQ==", "iter": 250000, "v": 1};
+const META={"salt": "TeYWkdcMlEZRUBby0WVI+Q==", "iter": 250000, "v": 1};
 const $=s=>document.querySelector(s);
 const GROUPS=["원유·환율","기초유분","합성수지","점착제·지류","물류"];
 const TONE={"상승":"bad","상승 압력":"bad","활성":"bad","높음":"bad","▲":"bad","혼조":"warn","주의":"warn","보통":"warn","◆":"warn","하락":"ok","완화":"ok","낮음":"ok","▼":"ok","보합":"mute","안정":"mute","—":"mute"};
@@ -147,14 +150,25 @@ function mmdd(s){return s?s.slice(5).replace("-","/"):"—";}
 function td(c,cls){const e=el("td",cls);if(c instanceof Node)e.append(c);else e.textContent=c==null?"":c;return e;}
 function rows(n){return D[n].filter(r=>r.report_date===week);}
 function notes(sec){return rows("notes").filter(r=>r.section===sec).sort((a,b)=>a.order-b.order);}
+let FN=new Map();
+function buildFn(){const m=new Map();const add=(u,n)=>{if(u&&!m.has(u))m.set(u,{n:m.size+1,name:n||""});};
+  ["기사요약","요약","변동요인","주시","취약점","권고"].forEach(sec=>notes(sec).forEach(r=>add(r.source_url,r.source)));
+  rows("prices").forEach(r=>add(r.source_url,r.source));
+  (D.longterm||[]).filter(r=>r.report_date===week).forEach(r=>[6,3,1].forEach(k=>add(r["m"+k+"_url"],(r["m"+k+"_source"]||"")+" ("+k+"개월 전 비교)")));FN=m;}
+function fn(u){const f=u&&FN.get(u);if(!f)return document.createTextNode("");const s=el("sup","fn");const a=el("a",null,String(f.n));a.href=u;a.target="_blank";a.rel="noopener";a.title="["+f.n+"] "+(f.name||u);s.append(a);return s;}
+function renderBrief(s){const B=notes("기사요약");const sec=$("#brief");if(!B.length){sec.hidden=true;return;}
+  const p=$("#brieftext");p.replaceChildren();B.forEach((r,i)=>{if(i)p.append(" ");p.append(r.text,fn(r.source_url));});
+  const d=new Date(week+"T00:00:00");const per=(s.week_label.split("(")[1]||"").replace(")","");
+  $("#briefdate").textContent=week.replace(/-/g,".")+" ("+"일월화수목금토"[d.getDay()]+"요일)"+(per?" · 기사 수집 "+per:"");sec.hidden=false;}
 function render(){
   const s=D.summary.find(r=>r.report_date===week);
+  buildFn();renderBrief(s);
   $("#sub").textContent=week.replace(/-/g,".")+" · "+s.week_label;
   $("#tier").textContent=s.tier_name;$("#tier").style.color=TIERC[s.tier-1];
   $("#stance").textContent=s.stance;$("#headline").textContent=s.headline;
   document.querySelectorAll("#meter i").forEach((e,i)=>e.style.background=i<s.tier?TIERC[s.tier-1]:"");
-  const sum=$("#l-sum");sum.replaceChildren(...notes("요약").map(n=>{const li=el("li",null,n.text);if(n.source_url)li.append(link(n.source_url,n.source));return li;}));
-  const flat=(id,sec,isChip)=>{$(id).replaceChildren(...notes(sec).map(n=>{const li=el("li");li.append(isChip?chip(n.tag||"—"):el("span","tag",n.tag));const b=el("span",null,n.text);if(n.source_url)b.append(link(n.source_url,n.source));li.append(b);return li;}));};
+  const sum=$("#l-sum");sum.replaceChildren(...notes("요약").map(n=>{const li=el("li",null,n.text);if(n.source_url)li.append(fn(n.source_url));return li;}));
+  const flat=(id,sec,isChip)=>{$(id).replaceChildren(...notes(sec).map(n=>{const li=el("li");li.append(isChip?chip(n.tag||"—"):el("span","tag",n.tag));const b=el("span",null,n.text);if(n.source_url)b.append(fn(n.source_url));li.append(b);return li;}));};
   flat("#l-drv","변동요인",true);flat("#l-watch","주시");flat("#l-vuln","취약점");flat("#l-reco","권고");
   const P=rows("prices");P.forEach(r=>{r._c=pct(r.value,r.prev);r._w=pct(r.value,r.wk4);});
   const host=$("#prices");host.replaceChildren();
@@ -168,9 +182,7 @@ function render(){
   const ot=$("#t-out tbody");ot.replaceChildren(...rows("outlook").sort((a,b)=>a.order-b.order).map(r=>{const tr=el("tr");tr.append(td(r.indicator,"item"),td(chip(r.direction)),td(r.outlook),td(r.basis,"dim small"));return tr;}));
   $("#paths").replaceChildren(...rows("paths").sort((a,b)=>a.order-b.order).map(r=>{const c=el("div","card");const h=el("div","ph");h.append(el("b",null,r.product),chip(r.status));const ch=el("div","chain");r.chain.split(" → ").forEach((x,i,arr)=>{ch.append(el("span","step",x));if(i<arr.length-1)ch.append(el("span","dim","→"));});c.append(h,ch,el("p","lag","시차 "+r.lag),el("p",null,r.note));c.lastChild.style.margin="4px 0 0";return c;}));
   const mt=$("#t-mx tbody");mt.replaceChildren(...rows("matrix").sort((a,b)=>a.order-b.order).map(r=>{const tr=el("tr");tr.append(td(r.product,"item"),td(r.inputs,"dim"),td(chip(r.direction)),td(chip(r.short)),td(chip(r.mid)),td(chip(r.long)),td(r.change,"num "+(r.change==="▲"?"up":r.change==="▼"?"down":"dim")),td(r.comment,"small"));return tr;}));
-  const seen=new Map();[...P,...rows("notes")].forEach(r=>{if(r.source_url&&!seen.has(r.source_url))seen.set(r.source_url,r.source||"");});
-  (D.longterm||[]).filter(r=>r.report_date===week).forEach(r=>{[6,3,1].forEach(m=>{const u=r["m"+m+"_url"];if(u&&!seen.has(u))seen.set(u,(r["m"+m+"_source"]||"")+" ("+m+"개월 전 비교)");});});
-  $("#srcs").replaceChildren(...[...seen].map(([u,n])=>{const li=el("li");const a=el("a",null,u);a.href=u;a.target="_blank";a.rel="noopener";li.append(n?n+" · ":"",a);return li;}));
+  $("#srcs").replaceChildren(...[...FN].map(([u,f])=>{const li=el("li");li.id="src-"+f.n;const a=el("a",null,u);a.href=u;a.target="_blank";a.rel="noopener";li.append(f.name?f.name+" · ":"",a);return li;}));
   const has=(D.pdfs||[]).includes(week);$("#pdfbtn").disabled=!has;$("#pdfbtn").textContent=has?"PDF 받기":"PDF 없음";$("#msg").textContent="";
 }
 let LTM=6;
