@@ -124,6 +124,14 @@ h2 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
 
 .state { padding: 30px 20px; text-align: center; color: var(--muted); display: grid; gap: 6px; }
 .state strong { color: var(--ink); font-weight: 600; }
+.criteria { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--radius); padding: 0 18px; }
+.criteria summary { cursor: pointer; padding: 13px 0; font-weight: 600; font-size: 14px; list-style-position: inside; }
+.criteria summary::marker { color: var(--teal); }
+.crit-body { display: grid; gap: 12px; padding: 0 0 16px; font-size: 13.5px; color: var(--ink-2); }
+.crit-body h3 { margin: 0 0 4px; font-size: 13px; color: var(--ink); }
+.crit-body ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 3px; }
+.crit-body .cat { font-weight: 600; color: var(--teal-ink); }
+.crit-body .ref { font-size: 12px; color: var(--muted); }
 .foot { margin: 4px 0 0; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 4px; }
 
 @media (max-width: 520px) {
@@ -190,6 +198,11 @@ body { margin: 0; }
   <main id="main">
   </main>
 
+  <details class="criteria" id="criteria" hidden>
+    <summary>경제·물류 기사 선별 기준</summary>
+    <div class="crit-body" id="crit-body"></div>
+  </details>
+
   <div class="foot">
     <span>공개 기사와 각 그룹 공식 뉴스룸 보도자료를 바탕으로 Claude가 고르고 한 줄로 요약한 참고 자료입니다. 판단에 쓰기 전에 원문을 확인해 주세요.</span>
     <span>고객사 뉴스는 주요 일간지·통신사 기사와 공식 보도자료만 담습니다.</span>
@@ -231,7 +244,8 @@ body { margin: 0; }
     var body = el('div', 'body');
     var url = safeUrl(it.url);
     var hl = el(url ? 'a' : 'span', 'hl');
-    if (opts && opts.tag) hl.appendChild(el('span', 'badge cat', opts.tag));
+    var tag = (opts && opts.tag && opts.tag !== '경제·물류') ? opts.tag : it.cat;
+    if (tag) hl.appendChild(el('span', 'badge cat', tag));
     if (it.kind === 'press') hl.appendChild(el('span', 'badge press', '보도자료'));
     hl.appendChild(document.createTextNode(it.title || '(제목 없음)'));
     if (url) { hl.href = url; hl.target = '_blank'; hl.rel = 'noopener noreferrer'; hl.appendChild(el('span', 'ext', '↗')); }
@@ -362,6 +376,28 @@ body { margin: 0; }
     main.appendChild(s);
   }
 
+  function renderCriteria(c) {
+    var box = $('criteria'), body = $('crit-body');
+    if (!c || !Array.isArray(c.sections)) { box.hidden = true; return; }
+    body.textContent = '';
+    if (c.goal) body.appendChild(el('p', '', c.goal));
+    c.sections.forEach(function (sec) {
+      var d = el('div', '');
+      d.appendChild(el('h3', '', sec.title || ''));
+      var ul = el('ul', '');
+      arr(sec.items).forEach(function (x) {
+        var li = el('li', '');
+        if (x.label) { li.appendChild(el('span', 'cat', x.label)); li.appendChild(document.createTextNode(' — ')); }
+        li.appendChild(document.createTextNode(x.text || ''));
+        ul.appendChild(li);
+      });
+      d.appendChild(ul); body.appendChild(d);
+    });
+    if (c.refs) body.appendChild(el('p', 'ref', c.refs));
+    box.hidden = false;
+  }
+  window.renderCriteria = renderCriteria;
+
   function renderMessage(title, sub) {
     var main = $('main'); main.textContent = '';
     var d = el('div', 'sheet state');
@@ -444,14 +480,13 @@ body { margin: 0; }
   });
   window.addEventListener('hashchange', function () { var d = fromHash(); if (d) go(d); });
 
-  var META = {"salt": "93Rv7FXoPEmtuczkWDOhLQ==", "iter": 250000, "v": 1}, KEY = null, PWK = 'pkg_daily_pw';
+  var META = {"salt": "aVrgCvunL7k0h0tHXRXeeQ==", "iter": 250000, "v": 1}, KEY = null, PWK = 'pkg_daily_pw';
   function b64(s) { return Uint8Array.from(atob(s), function (c) { return c.charCodeAt(0); }); }
   async function derive(pw) {
     var base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
     return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(META.salt), iterations: META.iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
   }
   async function dec(buf) { var u = new Uint8Array(buf); return crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.slice(0, 12) }, KEY, u.slice(12)); }
-  window.dec = dec;
   async function unlock(pw) {
     KEY = await derive(pw);
     var r = await fetch('data.bin', { cache: 'no-store' });
@@ -463,6 +498,7 @@ body { margin: 0; }
     var i = want ? state.briefs.findIndex(function (b) { return b.date === want; }) : -1;
     state.idx = i >= 0 ? i : 0;
     $('lock').hidden = true; $('app').hidden = false;
+    renderCriteria(data.criteria || null);
     render();
   }
   function store(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
