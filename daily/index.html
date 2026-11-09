@@ -276,8 +276,8 @@ body { margin: 0; }
     $('stamp').textContent = b ? stampOf(b.date) : '————————';
     $('stamp-day').textContent = b ? dayOf(b.date) : '—';
     $('stamp-en').textContent = b && dowIndex(b.date) >= 0 ? DAYS_EN[dowIndex(b.date)] : '';
-    $('n-eco').textContent = b ? String(arr(b.economy).length) : '–';
-    $('n-cli').textContent = b ? String(clientCount(b)) : '–';
+    $('n-eco').textContent = b ? arr(b.economy).length + '건' : '–';
+    $('n-cli').textContent = b ? clientCount(b) + '건' : '–';
     $('meta').textContent = b && b.published_at ? '정리 ' + shortDate(b.published_at) + ' KST' : '';
     var sel = $('date-select'); sel.textContent = '';
     state.briefs.forEach(function (x, i) {
@@ -511,7 +511,7 @@ body { margin: 0; }
   });
   window.addEventListener('hashchange', function () { var d = fromHash(); if (d) go(d); });
 
-  var META = {"salt": "dY4RKvpJ1+LR6cug1bDXmQ==", "iter": 250000, "v": 1}, KEY = null, PWK = 'pkg_daily_pw';
+  var META = {"salt": "ARCfmOVfu0AY5JYeNGav2g==", "iter": 250000, "v": 1}, KEY = null, PWK = 'pkg_daily_pw';
   function b64(s) { return Uint8Array.from(atob(s), function (c) { return c.charCodeAt(0); }); }
   async function derive(pw) {
     var base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
