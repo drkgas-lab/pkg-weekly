@@ -1,8 +1,8 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>경제·물류 주요뉴스</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
 <style>
+@font-face { font-family: "KoPub Dotum"; src: url("fonts/KoPubDotumLight.ttf") format("truetype"); font-weight: 100 400; font-display: swap; }
+@font-face { font-family: "KoPub Dotum"; src: url("fonts/KoPubDotumMedium.ttf") format("truetype"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "KoPub Dotum"; src: url("fonts/KoPubDotumBold.ttf") format("truetype"); font-weight: 600 900; font-display: swap; }
 /* Layout: one reading column. Masthead = logo + a three-block date bar echoing the logo's teal | black | mustard blocks; teal marks the economy section, mustard marks client news. */
 :root {
   --paper: #f2f5f4;
@@ -20,8 +20,8 @@
   --block-black: #111111;
   --on-block: #ffffff;
   --chip: #f5f7f6;
-  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-body: "KoPub Dotum", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono: "KoPub Dotum", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --radius: 4px;
 }
 @media (prefers-color-scheme: dark) {
@@ -54,7 +54,7 @@ body { background: var(--paper); color: var(--ink); font-family: var(--font-body
 .db-day { background: var(--block-black); align-items: center; text-align: center; }
 .db-count { background: var(--mustard); color: #1a1200 !important; }
 .db-label { font-size: 11px; letter-spacing: .16em; opacity: .85; font-weight: 500; }
-.db-num { font-family: var(--font-mono); font-weight: 500; font-size: clamp(26px, 6.2vw, 38px); letter-spacing: .12em; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.db-num { font-family: var(--font-mono); font-weight: 700; font-size: clamp(26px, 6.2vw, 38px); letter-spacing: .12em; line-height: 1.15; font-variant-numeric: tabular-nums; }
 .db-dow { font-size: clamp(20px, 4.4vw, 26px); font-weight: 600; line-height: 1.2; }
 .db-dow-en { font-family: var(--font-mono); font-size: 11px; letter-spacing: .2em; opacity: .75; }
 .db-stats { display: grid; gap: 1px; font-size: 13px; font-weight: 500; }
@@ -511,7 +511,7 @@ body { margin: 0; }
   });
   window.addEventListener('hashchange', function () { var d = fromHash(); if (d) go(d); });
 
-  var META = {"salt": "ARCfmOVfu0AY5JYeNGav2g==", "iter": 250000, "v": 1}, KEY = null, PWK = 'pkg_daily_pw';
+  var META = {"salt": "z9LfHZGf2R6dl22OUeFdlg==", "iter": 250000, "v": 1}, KEY = null, PWK = 'pkg_daily_pw';
   function b64(s) { return Uint8Array.from(atob(s), function (c) { return c.charCodeAt(0); }); }
   async function derive(pw) {
     var base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
