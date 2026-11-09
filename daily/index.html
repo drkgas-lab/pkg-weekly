@@ -545,7 +545,7 @@ body { margin: 0; }
   });
   window.addEventListener('hashchange', function () { var d = fromHash(); if (d) go(d); });
 
-  var META = {"salt": "WAnzoJpZLDJAk04bzKzJog==", "iter": 250000, "v": 1}, KEY = null, PWK = 'pkg_daily_pw';
+  var META = {"salt": "MUCaIHHzTTVhBbRnxMBghg==", "iter": 250000, "v": 1}, KEY = null, PWK = 'pkg_daily_pw';
   function b64(s) { return Uint8Array.from(atob(s), function (c) { return c.charCodeAt(0); }); }
   async function derive(pw) {
     var base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
